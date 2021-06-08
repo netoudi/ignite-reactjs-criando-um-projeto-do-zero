@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import Prismic from '@prismicio/client';
 import { RichText } from 'prismic-dom';
 import { getPrismicClient } from '../../services/prismic';
+import { removeTags } from '../../utils/removeTags';
 import { formatDate } from '../../utils/format';
 
 import commonStyles from '../../styles/common.module.scss';
@@ -56,6 +57,14 @@ export default function Post({ post }: PostProps) {
     },
   };
 
+  const wordsPerMinute = 200;
+
+  const totalWords = post.data.content?.reduce((acc, cur) => {
+    return acc + removeTags(RichText.asText(cur.body) || '').length;
+  }, 0);
+
+  const readingTime = Math.ceil(totalWords / wordsPerMinute);
+
   return (
     <section>
       <div className={styles.banner}>
@@ -76,7 +85,8 @@ export default function Post({ post }: PostProps) {
               <FiUser size={20} /> {postFormatted.data.author}
             </div>
             <div className={styles.infoItem}>
-              <FiClock size={20} /> 4 min
+              <FiClock size={20} />
+              <span>{`${readingTime} min`}</span>
             </div>
           </div>
         </div>
