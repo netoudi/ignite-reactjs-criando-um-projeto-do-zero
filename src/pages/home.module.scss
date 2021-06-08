@@ -1,1 +1,78 @@
-// TODO
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 2rem;
+}
+
+.heading {
+  font-family: "Inter", sans-serif;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 28px;
+  line-height: 34px;
+
+  text-align: justify;
+  letter-spacing: -0.5px;
+  color: var(--heading);
+  margin-bottom: 8px;
+
+  transition: filter 0.2s;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+}
+
+.subtitle {
+  display: block;
+  font-family: "Inter", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 22px;
+
+  text-align: justify;
+  color: var(--body);
+  margin-bottom: 24px;
+
+}
+
+.info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: var(--info);
+
+  svg {
+    margin-right: 8px;
+  }
+
+  svg:last-child {
+    margin-left: 24px;
+  }
+}
+
+.listItem {
+  & + div {
+    margin-top: 50px;
+  }
+}
+
+.buttonShowMore {
+  margin-top: 64px;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 22px;
+  color: var(--highlight);
+  text-align: justify;
+  border: none;
+  background-color: transparent;
+
+  transition: filter 0.2s;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+}
