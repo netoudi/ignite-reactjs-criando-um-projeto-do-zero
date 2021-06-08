@@ -1,7 +1,11 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
 
 import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
+import { useRouter } from 'next/router';
+import Prismic from '@prismicio/client';
+import { RichText } from 'prismic-dom';
 import { getPrismicClient } from '../../services/prismic';
+import { formatDate } from '../../utils/format';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
@@ -27,26 +31,49 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post() {
+export default function Post({ post }: PostProps) {
+  const router = useRouter();
+
+  if (router.isFallback) {
+    return <div className={styles.container}>Carregando...</div>;
+  }
+
+  const postFormatted = {
+    first_publication_date: formatDate(
+      post.first_publication_date,
+      'dd MMM yyyy'
+    ),
+    data: {
+      title: post.data.title,
+      banner: {
+        url: post.data?.banner?.url,
+      },
+      author: post.data.author,
+      content: post.data.content?.map(el => ({
+        heading: el.heading,
+        body: [{ text: RichText.asHtml(el.body) }],
+      })),
+    },
+  };
+
   return (
     <section>
       <div className={styles.banner}>
-        <img src="/images/banner.jpg" alt="Post title" />
+        <img
+          src={postFormatted.data.banner.url}
+          alt={postFormatted.data.title}
+        />
       </div>
       <div className={styles.container}>
         <div className={styles.listItem}>
-          <a href="/post/xpto">
-            <h1 className={styles.heading}>Como utilizar Hooks</h1>
-          </a>
-          <span className={styles.subtitle}>
-            Pensando em sincronização em vez de ciclos de vida.
-          </span>
+          <h1 className={styles.heading}>{postFormatted.data.title}</h1>
           <div className={styles.info}>
             <div className={styles.infoItem}>
-              <FiCalendar size={20} /> 15 Mar 2021
+              <FiCalendar size={20} />{' '}
+              <span>{postFormatted.first_publication_date}</span>
             </div>
             <div className={styles.infoItem}>
-              <FiUser size={20} /> Joseph Oliveira
+              <FiUser size={20} /> {postFormatted.data.author}
             </div>
             <div className={styles.infoItem}>
               <FiClock size={20} /> 4 min
@@ -54,68 +81,56 @@ export default function Post() {
           </div>
         </div>
         <div className={styles.content}>
-          <h2>Lorem ipsum dolor.</h2>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugiat in
-            maxime omnis recusandae saepe vel! Autem consequatur eveniet hic
-            illo labore magnam minus nemo, nobis nulla obcaecati odit
-            praesentium quisquam, quo, recusandae reprehenderit tempora
-            voluptates! Adipisci aut blanditiis exercitationem modi quasi quo
-            tempora veniam voluptates. Earum enim excepturi ipsa ut.
-          </p>
-          <h2>Lorem ipsum dolor.</h2>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-            Dignissimos harum odio quam quod! Beatae deleniti dolores dolorum
-            error et, ex facilis magni, nesciunt odit pariatur ratione
-            reiciendis rem sapiente similique. Lorem ipsum dolor sit amet,
-            consectetur adipisicing elit. Fugiat in maxime omnis recusandae
-            saepe vel! Autem consequatur eveniet hic illo labore magnam minus
-            nemo, nobis nulla obcaecati odit praesentium quisquam, quo,
-            recusandae reprehenderit tempora voluptates! Adipisci aut blanditiis
-            exercitationem modi quasi quo tempora veniam voluptates. Earum enim
-            excepturi <a href="/">ipsa ut</a>.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-            Dignissimos harum odio quam quod! Beatae deleniti dolores dolorum
-            error et, ex facilis magni, nesciunt odit pariatur ratione
-            reiciendis rem sapiente similique. Lorem ipsum dolor sit amet,
-            consectetur adipisicing elit. Fugiat in maxime omnis recusandae
-            saepe vel! Autem consequatur eveniet hic illo labore magnam minus
-            nemo, nobis nulla obcaecati odit praesentium quisquam, quo,
-            recusandae reprehenderit tempora voluptates! Adipisci aut blanditiis
-            exercitationem modi quasi quo tempora veniam voluptates. Earum enim
-            excepturi ipsa ut.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-            Dignissimos harum odio quam quod! Beatae deleniti dolores dolorum
-            error et, ex facilis magni, nesciunt odit pariatur ratione
-            reiciendis rem sapiente similique. Lorem ipsum dolor sit amet,
-            consectetur adipisicing elit. Fugiat in maxime omnis recusandae
-            saepe vel! Autem consequatur eveniet hic illo labore magnam minus
-            nemo, nobis nulla obcaecati odit praesentium quisquam, quo,
-            recusandae reprehenderit tempora voluptates! Adipisci aut blanditiis
-            exercitationem modi quasi quo tempora veniam voluptates. Earum enim
-            excepturi ipsa ut.
-          </p>
+          {postFormatted.data?.content?.map(content => {
+            return (
+              <div key={content.heading}>
+                <h2>{content.heading}</h2>
+                {content.body.map(body => (
+                  <div
+                    key={body.text}
+                    dangerouslySetInnerHTML={{ __html: String(body.text) }}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient();
-//   const posts = await prismic.query(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient();
+  const posts = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      fetch: ['posts.uid'],
+      pageSize: 1,
+    }
+  );
 
-//   // TODO
-// };
+  const paths = posts.results.map(post => {
+    return { params: { slug: post.uid } };
+  });
 
-// export const getStaticProps = async context => {
-//   const prismic = getPrismicClient();
-//   const response = await prismic.getByUID(TODO);
+  return {
+    paths,
+    fallback: true,
+  };
+};
 
-//   // TODO
-// };
+export const getStaticProps: GetStaticProps = async context => {
+  const prismic = getPrismicClient();
+  const response = await prismic.getByUID(
+    'posts',
+    String(context.params.slug),
+    {}
+  );
+
+  return {
+    props: {
+      post: response,
+    },
+  };
+};
