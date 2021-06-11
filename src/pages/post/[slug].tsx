@@ -60,7 +60,7 @@ export default function Post({ post }: PostProps) {
   const wordsPerMinute = 200;
 
   const totalWords = post.data.content?.reduce((acc, cur) => {
-    return acc + removeTags(RichText.asText(cur.body) || '').length;
+    return acc + removeTags(RichText.asText(cur.body) || '').split(' ').length;
   }, 0);
 
   const readingTime = Math.ceil(totalWords / wordsPerMinute);
